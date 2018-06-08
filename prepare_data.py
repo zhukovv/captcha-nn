@@ -23,7 +23,6 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
     letters_count = len(captcha_correct_text)
 
     print("[INFO] processing image {}/{}".format(i + 1, len(captcha_image_files))+" = "+captcha_correct_text)
-    #print letters_count
 
     # Load the image and convert it to grayscale
     image = cv2.imread(captcha_image_file)
@@ -65,7 +64,6 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
     contours = contours[0] if imutils.is_cv2() else contours[1]
 
     contours_count = len(contours)
-    print("contours: ", contours_count)
 
     if (contours_count<1):
         continue
@@ -88,18 +86,15 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
             ymin = min(ymin, y)
             ymax = max(ymax, y+h)
 
-        print contours_count
-        print xmin, xmax, ymin, ymax
+        offset = 0
 
-        x = xmin
-        y = ymin
-        w = xmax - xmin
-        h = ymax - ymin
-
-        print x, y, w, h
+        x = xmin - offset
+        y = ymin -offset
+        w = xmax - xmin + offset
+        h = ymax - ymin + offset
 
         output = cv2.merge([processed] * 3)
-        cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 255, 0), 1)
+        cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), (255, 0, 0), 1)
         cv2.imshow("Output", output)
         cv2.moveWindow('Output', 1200, 100)
         cv2.waitKey(1)
@@ -107,27 +102,16 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
         letter_width = int(w / letters_count)
 
         for i in range(0, letters_count):
-            print i
             letter_image_regions.append((x+letter_width*i, y, letter_width, h))
 
-    # Now we can loop through each of the four contours and extract the letter
-    # inside of each one
+    # we extracted a correct letters number
     else:
         for contour in contours:
             # Get the rectangle that contains the contour
             (x, y, w, h) = cv2.boundingRect(contour)
 
-            # Compare the width and height of the contour to detect letters that
-            # are conjoined into one chunk
-            if w / h > 1.25:
-                # This contour is too wide to be a single letter!
-                # Split it in half into two letter regions!
-                half_width = int(w / 2)
-                letter_image_regions.append((x, y, half_width, h))
-                letter_image_regions.append((x + half_width, y, half_width, h))
-            else:
-                # This is a normal letter by itself
-                letter_image_regions.append((x, y, w, h))
+            # This is a normal letter by itself
+            letter_image_regions.append((x, y, w, h))
 
 
     # If we found more or less than is actually in the captcha, our letter extraction

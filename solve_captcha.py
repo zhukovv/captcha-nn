@@ -87,12 +87,12 @@ for image_file in captcha_image_files:
             ymin = min(ymin, y)
             ymax = max(ymax, y+h)
 
-        x = xmin
-        y = ymin
-        w = xmax - xmin
-        h = ymax - ymin
+        offset = 0
 
-        #print x, y, w, h
+        x = xmin - offset
+        y = ymin -offset
+        w = xmax - xmin + offset
+        h = ymax - ymin + offset
 
         output = cv2.merge([processed] * 3)
         cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 255, 0), 1)
@@ -166,7 +166,7 @@ for image_file in captcha_image_files:
     if (captcha_text == captcha_correct_text):
         correct_captchas += 1
         res_text = "good"
-    print("CAPTCHA text is: '{}'' vs '{}', {}, acc: {}, {}/{}".format(captcha_text, captcha_correct_text, res_text, float(correct_captchas)/float(total_captchas), correct_captchas, total_captchas))
+    print("CAPTCHA text is: {} vs {}, {}, acc: {}, {}/{}".format(captcha_text, captcha_correct_text, res_text, float(correct_captchas)/float(total_captchas), correct_captchas, total_captchas))
 
     # Show the annotated image
     cv2.imshow("Output", output)
