@@ -34,14 +34,11 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
 
     # threshold the image
     thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-    #thresh = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
-    #        cv2.THRESH_BINARY,33,2)
 
     # suppress the background
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
     erosion = cv2.erode(thresh,kernel,iterations = 1)
     dilation = cv2.dilate(erosion,kernel,iterations = 1)
-#    erosion = cv2.erode(dilation,kernel,iterations = 1)
     processed = dilation
 
     # debug visualizaions
@@ -95,8 +92,8 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
 
         output = cv2.merge([processed] * 3)
         cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), (255, 0, 0), 1)
-        cv2.imshow("Output", output)
-        cv2.moveWindow('Output', 1200, 100)
+        cv2.imshow("region", output)
+        cv2.moveWindow('region', 1200, 100)
         cv2.waitKey(1)
 
         letter_width = int(w / letters_count)
@@ -130,17 +127,11 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
         x, y, w, h = letter_bounding_box
 
         # Extract the letter from the original image with a 2-pixel margin around the edge
-        letter_image = processed[y - 2:y + h + 2, x - 2:x + w + 2]
+        letter_image = gray[y - 2:y + h + 2, x - 2:x + w + 2]
 
-        # suppress the background
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7,7))
-        erosion = cv2.erode(letter_image,kernel,iterations = 1)
-        dilation = cv2.dilate(erosion,kernel,iterations = 1)
-
-        # threshold the image
-        thresh = cv2.threshold(dilation, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-
-        #letter_image = thresh
+        letter_image = cv2.threshold(letter_image, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+        if (float(cv2.countNonZero(letter_image))/float(w*h) < 0.5):
+            letter_image = (255 - letter_image)
 
         # Get the folder to save the image in
         save_path = os.path.join(OUTPUT_FOLDER, letter_text)

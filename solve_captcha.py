@@ -136,7 +136,14 @@ for image_file in captcha_image_files:
         x, y, w, h = letter_bounding_box
 
         # Extract the letter from the original image with a 2-pixel margin around the edge
-        letter_image = processed[y - 2:y + h + 2, x - 2:x + w + 2]
+        #letter_image = processed[y - 2:y + h + 2, x - 2:x + w + 2]
+
+        # Extract the letter from the original image with a 2-pixel margin around the edge
+        letter_image = image[y - 2:y + h + 2, x - 2:x + w + 2]
+
+        letter_image = cv2.threshold(letter_image, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+        if (float(cv2.countNonZero(letter_image))/float(w*h) < 0.5):
+            letter_image = (255 - letter_image)
 
         #cv2.imshow('letter',letter_image)
         #cv2.waitKey(0)
