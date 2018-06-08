@@ -1,3 +1,5 @@
+import os
+import os.path
 from keras.models import load_model
 from helpers import resize_to_fit
 from imutils import paths
@@ -21,10 +23,18 @@ model = load_model(MODEL_FILENAME)
 
 # Grab some random CAPTCHA images to test against.
 captcha_image_files = list(paths.list_images(CAPTCHA_IMAGE_FOLDER))
-captcha_image_files = np.random.choice(captcha_image_files, size=(10,), replace=False)
+captcha_image_files = np.random.choice(captcha_image_files, size=(50,), replace=False)
+
+total_captchas = 0
+correct_captchas = 0
 
 # loop over the image paths
 for image_file in captcha_image_files:
+    filename = os.path.basename(image_file)
+    captcha_correct_text = (os.path.splitext(filename)[0]).upper()
+
+    letters_count = len(captcha_correct_text)
+
     # Load the image and convert it to grayscale
     image = cv2.imread(image_file)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -54,29 +64,70 @@ for image_file in captcha_image_files:
     # Hack for compatibility with different OpenCV versions
     contours = contours[0] if imutils.is_cv2() else contours[1]
 
+    contours_count = len(contours)
+
+    if (contours_count<1):
+        continue
+
     letter_image_regions = []
+
+    # if letters are overlapped - try to extract them by dividing the region uniformly
+    if (contours_count<letters_count):
+        xmin = 1000
+        xmax = 0
+        ymin = 1000
+        ymax = 0
+
+        for contour in contours:
+            (x, y, w, h) = cv2.boundingRect(contour)
+            xmin = min(xmin, x)
+            xmax = max(xmax, x+w)
+            ymin = min(ymin, y)
+            ymax = max(ymax, y+h)
+
+        #print contours_count
+        #print xmin, xmax, ymin, ymax
+
+        x = xmin
+        y = ymin
+        w = xmax - xmin
+        h = ymax - ymin
+
+        #print x, y, w, h
+
+        output = cv2.merge([processed] * 3)
+        cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 255, 0), 1)
+        cv2.imshow("Output", output)
+        cv2.waitKey(1)
+
+        letter_width = int(w / letters_count)
+
+        for i in range(0, letters_count):
+            letter_image_regions.append((x+letter_width*i, y, letter_width, h))
 
     # Now we can loop through each of the four contours and extract the letter
     # inside of each one
-    for contour in contours:
-        # Get the rectangle that contains the contour
-        (x, y, w, h) = cv2.boundingRect(contour)
+    else:
+        for contour in contours:
+            # Get the rectangle that contains the contour
+            (x, y, w, h) = cv2.boundingRect(contour)
 
-        # Compare the width and height of the contour to detect letters that
-        # are conjoined into one chunk
-        #if w / h > 1.25:
-        if False:
-            # This contour is too wide to be a single letter!
-            # Split it in half into two letter regions!
-            half_width = int(w / 2)
-            letter_image_regions.append((x, y, half_width, h))
-            letter_image_regions.append((x + half_width, y, half_width, h))
-        else:
-            # This is a normal letter by itself
-            letter_image_regions.append((x, y, w, h))
+            # Compare the width and height of the contour to detect letters that
+            # are conjoined into one chunk
+            if w / h > 1.25:
+                # This contour is too wide to be a single letter!
+                # Split it in half into two letter regions!
+                half_width = int(w / 2)
+                letter_image_regions.append((x, y, half_width, h))
+                letter_image_regions.append((x + half_width, y, half_width, h))
+            else:
+                # This is a normal letter by itself
+                letter_image_regions.append((x, y, w, h))
 
-    # Skip if the segmentation failed
-    if len(letter_image_regions) != 5:
+
+    # If we found more or less than is actually in the captcha, our letter extraction
+    # didn't work correcly. Skip the image instead of saving bad training data!
+    if len(letter_image_regions) != letters_count:
         continue
 
     # Sort the detected letter images based on the x coordinate to make sure
@@ -115,11 +166,14 @@ for image_file in captcha_image_files:
 
         # draw the prediction on the output image
         cv2.rectangle(output, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 255, 0), 1)
-        cv2.putText(output, letter, (x - 5, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
+        cv2.putText(output, letter, (x - 5, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 0), 2)
 
     # Print the captcha's text
     captcha_text = "".join(predictions)
-    print("CAPTCHA text is: {}".format(captcha_text))
+    total_captchas += 1
+    if (captcha_text == captcha_correct_text):
+        correct_captchas += 1
+    print("CAPTCHA text is: {} vs {}, acc: {}, {}/{}".format(captcha_text, captcha_correct_text, float(correct_captchas)/float(total_captchas), correct_captchas, total_captchas))
 
     # Show the annotated image
     cv2.imshow("Output", output)
