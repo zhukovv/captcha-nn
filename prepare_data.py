@@ -26,9 +26,8 @@ for (i, captcha_image_file) in enumerate(captcha_image_files):
     image = cv2.imread(captcha_image_file)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        # Add some extra padding around the image
-    #gray = cv2.copyMakeBorder(gray, 8, 8, 8, 8, cv2.BORDER_REPLICATE)
-    #gray = cv2.medianBlur(gray,11)
+    # Add some extra padding around the image
+    gray = cv2.copyMakeBorder(gray, 8, 8, 8, 8, cv2.BORDER_REPLICATE)
 
     # threshold the image
     thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
