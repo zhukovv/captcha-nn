@@ -51,13 +51,6 @@ for image_file in captcha_image_files:
 
     processed = dilation
 
-    #cv2.imshow('image',image)
-    #cv2.moveWindow('gray', 100, 100)
-    #cv2.imshow('processed',processed)
-    #cv2.moveWindow('processed', 500, 100)
-    #cv2.imshow('thresh',thresh)
-    #cv2.moveWindow('thresh', 800, 100)
-
     # find the contours (continuous blobs of pixels) the image
     contours = cv2.findContours(processed.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -135,20 +128,16 @@ for image_file in captcha_image_files:
         # Grab the coordinates of the letter in the image
         x, y, w, h = letter_bounding_box
 
-        # Extract the letter from the original image with a 2-pixel margin around the edge
-        #letter_image = processed[y - 2:y + h + 2, x - 2:x + w + 2]
-
-        # Extract the letter from the original image with a 2-pixel margin around the edge
+        # Extract the letter from the original image with a 2-pixel margin around the edge and thr it
         letter_image = image[y - 2:y + h + 2, x - 2:x + w + 2]
-
         letter_image = cv2.threshold(letter_image, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+
+        # process a situation where a letter is brigther than a background and other letters
         if (float(cv2.countNonZero(letter_image))/float(w*h) < 0.5):
             letter_image = (255 - letter_image)
 
-        #cv2.imshow('letter',letter_image)
-        #cv2.waitKey(0)
-
         # Re-size the letter image to 20x20 pixels to match training data
+        # TODO bigger size?
         letter_image = resize_to_fit(letter_image, 20, 20)
 
         # Turn the single image into a 4d list of images to make Keras happy
@@ -173,7 +162,7 @@ for image_file in captcha_image_files:
     if (captcha_text == captcha_correct_text):
         correct_captchas += 1
         res_text = "good"
-    print("CAPTCHA text is: {} vs {}, {}, acc: {}, {}/{}".format(captcha_text, captcha_correct_text, res_text, float(correct_captchas)/float(total_captchas), correct_captchas, total_captchas))
+    print("CAPTCHA: {} vs {}, {}, acc: {}, {}/{}".format(captcha_text, captcha_correct_text, res_text, float(correct_captchas)/float(total_captchas), correct_captchas, total_captchas))
 
     # Show the annotated image
     cv2.imshow("Output", output)

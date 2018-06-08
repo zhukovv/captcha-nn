@@ -18,7 +18,6 @@ LETTER_IMAGES_FOLDER = "data/letter_images"
 MODEL_FILENAME = "captcha_model.hdf5"
 MODEL_LABELS_FILENAME = "model_labels.dat"
 
-
 # initialize the data and labels
 data = []
 labels = []
