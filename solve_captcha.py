@@ -72,7 +72,7 @@ for image_file in captcha_image_files:
     letter_image_regions = []
 
     # if letters are overlapped - try to extract them by dividing the region uniformly
-    if (contours_count<letters_count):
+    if (contours_count!=letters_count):
         xmin = 1000
         xmax = 0
         ymin = 1000
@@ -80,13 +80,12 @@ for image_file in captcha_image_files:
 
         for contour in contours:
             (x, y, w, h) = cv2.boundingRect(contour)
+            if (w<30 or h<30):
+                continue
             xmin = min(xmin, x)
             xmax = max(xmax, x+w)
             ymin = min(ymin, y)
             ymax = max(ymax, y+h)
-
-        #print contours_count
-        #print xmin, xmax, ymin, ymax
 
         x = xmin
         y = ymin
@@ -112,22 +111,14 @@ for image_file in captcha_image_files:
             # Get the rectangle that contains the contour
             (x, y, w, h) = cv2.boundingRect(contour)
 
-            # Compare the width and height of the contour to detect letters that
-            # are conjoined into one chunk
-            if w / h > 1.25:
-                # This contour is too wide to be a single letter!
-                # Split it in half into two letter regions!
-                half_width = int(w / 2)
-                letter_image_regions.append((x, y, half_width, h))
-                letter_image_regions.append((x + half_width, y, half_width, h))
-            else:
-                # This is a normal letter by itself
-                letter_image_regions.append((x, y, w, h))
+            letter_image_regions.append((x, y, w, h))
 
 
     # If we found more or less than is actually in the captcha, our letter extraction
-    # didn't work correcly. Skip the image instead of saving bad training data!
+    # didn't work correcly. Skip the image and mark as a fail
     if len(letter_image_regions) != letters_count:
+        print("skipped - {}, {}".format(len(letter_image_regions), contours_count))
+        total_captchas += 1
         continue
 
     # Sort the detected letter images based on the x coordinate to make sure

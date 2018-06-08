@@ -9,6 +9,9 @@ from keras.models import Sequential
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.core import Flatten, Dense
 from helpers import resize_to_fit
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 LETTER_IMAGES_FOLDER = "data/letter_images"
@@ -72,14 +75,14 @@ model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Flatten())
 model.add(Dense(500, activation="relu"))
 
-# Output layer with 32 nodes (one for each possible letter/number we predict)
-model.add(Dense(21, activation="softmax"))
+# Output layer with 20 nodes (one for each possible letter/number we predict)
+model.add(Dense(20, activation="softmax"))
 
 # Ask Keras to build the TensorFlow model behind the scenes
 model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 # Train the neural network
-model.fit(X_train, Y_train, validation_data=(X_test, Y_test), batch_size=21, epochs=10, verbose=1)
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), batch_size=20, epochs=10, verbose=1)
 
 # Save the trained model to disk
 model.save(MODEL_FILENAME)
