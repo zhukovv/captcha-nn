@@ -162,9 +162,11 @@ for image_file in captcha_image_files:
     # Print the captcha's text
     captcha_text = "".join(predictions)
     total_captchas += 1
+    res_text = "fail"
     if (captcha_text == captcha_correct_text):
         correct_captchas += 1
-    print("CAPTCHA text is: {} vs {}, acc: {}, {}/{}".format(captcha_text, captcha_correct_text, float(correct_captchas)/float(total_captchas), correct_captchas, total_captchas))
+        res_text = "good"
+    print("CAPTCHA text is: '{}'' vs '{}', {}, acc: {}, {}/{}".format(captcha_text, captcha_correct_text, res_text, float(correct_captchas)/float(total_captchas), correct_captchas, total_captchas))
 
     # Show the annotated image
     cv2.imshow("Output", output)
